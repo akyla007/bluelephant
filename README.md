@@ -114,12 +114,25 @@ wscat -c ws://localhost:8000/ws
 
 Abra dois terminais e envie mensagens para validar o broadcast.
 
+
+## 💾 Persistência (SQLite)
+
+As mensagens são armazenadas em SQLite no arquivo `messages.db`.
+- Tabela: `messages (id, client_id, content, created_at)`
+- A cada mensagem recebida via WebSocket:
+  1. O servidor salva no banco
+  2. Realiza broadcast para os clientes conectados
+
+Ao conectar, o cliente recebe um histórico das últimas 20 mensagens (configurável).
+
+
 ## 🧠 Decisões Técnicas
 
 - **FastAPI** pela simplicidade, clareza e suporte nativo a WebSockets.
 - **ConnectionManager** para centralizar o controle das conexões ativas e facilitar manutenção.
 - **Broadcast** como abordagem mais simples e adequada ao escopo do desafio.
 - **uv** e **black** para ambiente moderno, reprodutível e código padronizado.
+- **sqlite**: Fácil de manusear.
 
 ## 🚀 Possíveis Extensões
 
