@@ -1,9 +1,9 @@
 import uuid
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 
 from backend.connection_manager import ConnectionManager
-from backend.db import get_recent_messages, init_db, insert_message
+from backend.db import get_messages, get_recent_messages, init_db, insert_message
 
 app = FastAPI()
 manager = ConnectionManager()
@@ -17,6 +17,14 @@ async def startup() -> None:
 @app.get("/")
 async def health_check() -> dict:
     return {"status": "ok"}
+
+@app.get("/messages")
+async def list_messages(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    messages = await get_messages(limit=limit, offset=offset)
+    return {"count": len(messages), "items": messages}
 
 
 @app.websocket("/ws")

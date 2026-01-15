@@ -65,6 +65,26 @@ def _get_recent_messages_sync(limit: int = 20) -> List[Dict[str, Any]]:
     finally:
         conn.close()
 
+def _get_messages_sync(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    conn = _get_conn()
+    try:
+        rows = conn.execute(
+            """
+            SELECT id, client_id, content, created_at
+            FROM messages
+            ORDER BY id DESC
+            LIMIT ? OFFSET ?;
+            """,
+            (limit, offset),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+async def get_messages(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    return await asyncio.to_thread(_get_messages_sync, limit, offset)
+
 
 async def get_recent_messages(limit: int = 20) -> List[Dict[str, Any]]:
     return await asyncio.to_thread(_get_recent_messages_sync, limit)
