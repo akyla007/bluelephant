@@ -181,8 +181,8 @@ Observação: o frontend limita imagens a ~1.5MB.
 - Identificação de clientes
 - Criação de salas (rooms)
 - Autenticação
-- Persistência de mensagens
-- Escalonamento com Pub/Sub (ex: Redis)
+- Persistência de mensagens ( Paginação, retenção, busca por texto...)
+- Escalonamento com Pub/Sub (ex: Redis) -> Permite atualizar de forma mais suave e evitar possíveis problemas de over pooling.
 
 ## 📌 Observações Finais
 
