@@ -55,6 +55,10 @@
                                 autocomplete="off" />
                             <button class="btn btn-primary" type="button" onclick="sendMessage()">Enviar</button>
                         </div>
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <input id="imageInput" class="form-control" type="file" accept="image/*" />
+                            <button class="btn btn-outline-primary" type="button" onclick="sendImage()">Enviar imagem</button>
+                        </div>
                         <small class="text-muted d-block mt-2">Pressione Enter para enviar.</small>
                     </div>
                 </div>
@@ -86,6 +90,7 @@
         const input = document.getElementById("messageInput");
         const usersList = document.getElementById("usersList");
         const onlineCount = document.getElementById("onlineCount");
+        const imageInput = document.getElementById("imageInput");
 
         socket.onmessage = function (event) {
             const data = event.data;
@@ -97,22 +102,33 @@
                         renderUsers(payload.items);
                         return;
                     }
+
+                    if (payload.type === "message") {
+                        renderMessage(payload);
+                        return;
+                    }
                 } catch {
                     // fallback para mensagem comum
                 }
             }
 
-            const li = document.createElement("li");
-            li.className = "px-3 py-2 rounded-3";
-            li.textContent = data;
-            messages.appendChild(li);
-            messages.scrollTop = messages.scrollHeight;
+            renderMessage({
+                message_type: "text",
+                from: null,
+                content: data,
+            });
         };
 
         function sendMessage() {
             const value = input.value.trim();
             if (!value) return;
-            socket.send(value);
+            socket.send(
+                JSON.stringify({
+                    type: "message",
+                    message_type: "text",
+                    content: value,
+                })
+            );
             input.value = "";
             input.focus();
         }
@@ -122,6 +138,57 @@
                 sendMessage();
             }
         });
+
+        function sendImage() {
+            const file = imageInput.files[0];
+            if (!file) return;
+
+            if (file.size > 1_500_000) {
+                alert("A imagem é muito grande. Tente uma menor (até 1.5MB).");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result;
+                socket.send(
+                    JSON.stringify({
+                        type: "message",
+                        message_type: "image",
+                        content: dataUrl,
+                    })
+                );
+                imageInput.value = "";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderMessage(payload) {
+            const li = document.createElement("li");
+            li.className = "px-3 py-2 rounded-3";
+
+            if (payload.message_type === "system") {
+                li.classList.add("text-muted", "fst-italic");
+                li.textContent = payload.content;
+            } else if (payload.message_type === "image") {
+                const header = document.createElement("div");
+                header.className = "small text-muted mb-2";
+                header.textContent = payload.from ? `${payload.from}:` : "imagem";
+
+                const image = document.createElement("img");
+                image.src = payload.content;
+                image.alt = "Imagem enviada";
+                image.className = "img-fluid rounded border";
+
+                li.appendChild(header);
+                li.appendChild(image);
+            } else {
+                li.textContent = payload.from ? `${payload.from}: ${payload.content}` : payload.content;
+            }
+
+            messages.appendChild(li);
+            messages.scrollTop = messages.scrollHeight;
+        }
 
         function renderUsers(users) {
             const normalized = users

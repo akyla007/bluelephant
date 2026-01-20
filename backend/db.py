@@ -26,6 +26,13 @@ def init_db() -> None:
             );
             """
         )
+        columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(messages);").fetchall()
+        }
+        if "message_type" not in columns:
+            conn.execute(
+                "ALTER TABLE messages ADD COLUMN message_type TEXT NOT NULL DEFAULT 'text';"
+            )
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -40,20 +47,22 @@ def init_db() -> None:
         conn.close()
 
 
-def _insert_message_sync(client_id: str, content: str) -> None:
+def _insert_message_sync(client_id: str, content: str, message_type: str) -> None:
     conn = _get_conn()
     try:
         conn.execute(
-            "INSERT INTO messages (client_id, content) VALUES (?, ?);",
-            (client_id, content),
+            "INSERT INTO messages (client_id, content, message_type) VALUES (?, ?, ?);",
+            (client_id, content, message_type),
         )
         conn.commit()
     finally:
         conn.close()
 
 
-async def insert_message(client_id: str, content: str) -> None:
-    await asyncio.to_thread(_insert_message_sync, client_id, content)
+async def insert_message(
+    client_id: str, content: str, message_type: str = "text"
+) -> None:
+    await asyncio.to_thread(_insert_message_sync, client_id, content, message_type)
 
 
 def _upsert_user_sync(name: str) -> None:
@@ -120,7 +129,7 @@ def _get_recent_messages_sync(limit: int = 20) -> List[Dict[str, Any]]:
     try:
         rows = conn.execute(
             """
-            SELECT id, client_id, content, created_at
+            SELECT id, client_id, content, created_at, message_type
             FROM messages
             ORDER BY id DESC
             LIMIT ?;
@@ -139,7 +148,7 @@ def _get_messages_sync(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]
     try:
         rows = conn.execute(
             """
-            SELECT id, client_id, content, created_at
+            SELECT id, client_id, content, created_at, message_type
             FROM messages
             ORDER BY id DESC
             LIMIT ? OFFSET ?;

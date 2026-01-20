@@ -19,13 +19,18 @@ class ConnectionManager:
         for connection in list(self.active_connections.keys()):
             await connection.send_text(message)
 
+    async def broadcast_json(self, payload: dict) -> None:
+        message = json.dumps(payload)
+        for connection in list(self.active_connections.keys()):
+            await connection.send_text(message)
+
     def get_user_names(self) -> List[str]:
         return list(self.active_connections.values())
 
     def has_name_active(self, name: str) -> bool:
-        return any(active_name == name for active_name in self.active_connections.values())
+        return any(
+            active_name == name for active_name in self.active_connections.values()
+        )
 
     async def broadcast_users(self, users: List[dict]) -> None:
-        payload = json.dumps({"type": "users", "items": users})
-        for connection in list(self.active_connections.keys()):
-            await connection.send_text(payload)
+        await self.broadcast_json({"type": "users", "items": users})
