@@ -3,9 +3,12 @@ from typing import Dict, List
 
 from fastapi import WebSocket
 
+from backend.chat_protocol import build_users_payload
+
 
 class ConnectionManager:
     def __init__(self) -> None:
+        # websocket -> nome do usuário
         self.active_connections: Dict[WebSocket, str] = {}
 
     async def connect(self, websocket: WebSocket, client_name: str) -> None:
@@ -33,4 +36,4 @@ class ConnectionManager:
         )
 
     async def broadcast_users(self, users: List[dict]) -> None:
-        await self.broadcast_json({"type": "users", "items": users})
+        await self.broadcast_json(build_users_payload(users))

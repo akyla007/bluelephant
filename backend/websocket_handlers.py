@@ -3,6 +3,7 @@ import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from backend.chat_protocol import build_message_payload, parse_incoming_message
 from backend.connection_manager import ConnectionManager
 from backend.db import (
     get_all_users,
@@ -24,14 +25,13 @@ def get_websocket_router(manager: ConnectionManager) -> APIRouter:
         is_history: bool = False,
     ) -> None:
         await manager.broadcast_json(
-            {
-                "type": "message",
-                "message_type": message_type,
-                "from": sender,
-                "content": content,
-                "created_at": created_at,
-                "history": is_history,
-            }
+            build_message_payload(
+                message_type,
+                content,
+                sender,
+                created_at=created_at,
+                is_history=is_history,
+            )
         )
 
     @router.websocket("/ws")
@@ -43,19 +43,18 @@ def get_websocket_router(manager: ConnectionManager) -> APIRouter:
         await upsert_user(client_name)
         await set_user_online(client_name, True)
 
-        # (Opcional) Envia histórico ao conectar
+        # Histórico inicial (limite 20)
         history = await get_recent_messages(limit=20)
         for msg in history:
             await websocket.send_text(
                 json.dumps(
-                    {
-                        "type": "message",
-                        "message_type": msg.get("message_type", "text"),
-                        "from": msg["client_id"],
-                        "content": msg["content"],
-                        "created_at": msg["created_at"],
-                        "history": True,
-                    }
+                    build_message_payload(
+                        msg.get("message_type", "text"),
+                        msg["content"],
+                        msg["client_id"],
+                        created_at=msg["created_at"],
+                        is_history=True,
+                    )
                 )
             )
 
@@ -66,18 +65,7 @@ def get_websocket_router(manager: ConnectionManager) -> APIRouter:
         try:
             while True:
                 raw_message = await websocket.receive_text()
-
-                message_type = "text"
-                content = raw_message
-
-                if raw_message.startswith("{"):
-                    try:
-                        payload = json.loads(raw_message)
-                        if payload.get("type") == "message":
-                            message_type = payload.get("message_type") or "text"
-                            content = str(payload.get("content") or "")
-                    except json.JSONDecodeError:
-                        pass
+                message_type, content = parse_incoming_message(raw_message)
 
                 # 1) salva no banco
                 await insert_message(

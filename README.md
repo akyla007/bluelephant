@@ -51,7 +51,9 @@ bluelephant/
 │   ├── main.py
 │   ├── http_handlers.py
 │   ├── websocket_handlers.py
-│   └── connection_manager.py
+│   ├── chat_protocol.py
+│   ├── connection_manager.py
+│   └── dev.py
 ├── frontend/
 │   └── index.html
 ├── info/
@@ -146,9 +148,33 @@ Ao conectar, o cliente recebe um histórico das últimas 20 mensagens (configur�
 - **Handlers dedicados** para rotas HTTP e WebSocket, mantendo o `main.py` apenas com wiring.
 - **uv** e **black** para ambiente moderno, reprodutível e código padronizado.
 - **sqlite**: Fácil de manusear.
- - **Nomes de usuário** via query string no handshake do WebSocket.
- - **Lista de usuários online/offline** persistida e sincronizada para todos os clientes.
- - **Mensagens com tipo** (`text`, `image`, `system`) para suportar multimídia.
+- **Nomes de usuário** via query string no handshake do WebSocket.
+- **Lista de usuários online/offline** persistida e sincronizada para todos os clientes.
+- **Mensagens com tipo** (`text`, `image`, `system`) para suportar multimídia.
+
+## 📨 Formato das Mensagens (WebSocket)
+
+O cliente envia mensagens no formato JSON abaixo:
+
+```json
+{
+  "type": "message",
+  "message_type": "text",
+  "content": "olá mundo"
+}
+```
+
+Para imagens, o `content` é um Data URL (base64):
+
+```json
+{
+  "type": "message",
+  "message_type": "image",
+  "content": "data:image/png;base64,..."
+}
+```
+
+Observação: o frontend limita imagens a ~1.5MB.
 
 ## 🚀 Possíveis Extensões
 

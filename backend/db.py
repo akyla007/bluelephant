@@ -16,6 +16,7 @@ def init_db() -> None:
     conn = _get_conn()
     try:
         conn.execute("PRAGMA journal_mode=WAL;")
+        # Mensagens do chat (texto/imagem/sistema)
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS messages (
@@ -26,6 +27,7 @@ def init_db() -> None:
             );
             """
         )
+        # Migração simples para suportar tipos de mensagem.
         columns = {
             row[1] for row in conn.execute("PRAGMA table_info(messages);").fetchall()
         }
@@ -33,6 +35,7 @@ def init_db() -> None:
             conn.execute(
                 "ALTER TABLE messages ADD COLUMN message_type TEXT NOT NULL DEFAULT 'text';"
             )
+        # Usuários e status online/offline
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
