@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from backend.connection_manager import ConnectionManager
-from backend.db import get_recent_messages, insert_message
+from backend.db import get_all_users, get_recent_messages, insert_message, set_user_online, upsert_user
 
 
 def get_websocket_router(manager: ConnectionManager) -> APIRouter:
@@ -15,6 +15,8 @@ def get_websocket_router(manager: ConnectionManager) -> APIRouter:
         requested_name = (websocket.query_params.get("name") or "").strip()
         client_name = requested_name or f"anon-{fallback_id}"
         await manager.connect(websocket, client_name)
+        await upsert_user(client_name)
+        await set_user_online(client_name, True)
 
         # (Opcional) Envia histórico ao conectar
         history = await get_recent_messages(limit=20)
@@ -25,7 +27,7 @@ def get_websocket_router(manager: ConnectionManager) -> APIRouter:
 
         # Aviso de entrada (opcional)
         await manager.broadcast(f"[system] {client_name} entrou no chat")
-        await manager.broadcast_users()
+        await manager.broadcast_users(await get_all_users())
 
         try:
             while True:
@@ -40,6 +42,8 @@ def get_websocket_router(manager: ConnectionManager) -> APIRouter:
         except WebSocketDisconnect:
             manager.disconnect(websocket)
             await manager.broadcast(f"[system] {client_name} saiu do chat")
-            await manager.broadcast_users()
+            if not manager.has_name_active(client_name):
+                await set_user_online(client_name, False)
+            await manager.broadcast_users(await get_all_users())
 
     return router

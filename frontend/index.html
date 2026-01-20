@@ -124,13 +124,25 @@
         });
 
         function renderUsers(users) {
-            usersList.innerHTML = "";
-            onlineCount.textContent = users.length.toString();
+            const normalized = users
+                .map((user) => ({
+                    name: user.name,
+                    online: Boolean(user.is_online),
+                }))
+                .sort((a, b) => Number(b.online) - Number(a.online) || a.name.localeCompare(b.name));
 
-            users.forEach((id) => {
+            usersList.innerHTML = "";
+            onlineCount.textContent = normalized.filter((user) => user.online).length.toString();
+
+            normalized.forEach((user) => {
                 const li = document.createElement("li");
-                li.className = "px-3 py-2 rounded-3 bg-light border";
-                li.textContent = id;
+                li.className = "px-3 py-2 rounded-3 bg-light border d-flex align-items-center justify-content-between";
+                li.innerHTML = `
+                    <span>${user.name}</span>
+                    <span class="badge ${user.online ? "text-bg-success" : "text-bg-secondary"}">
+                        ${user.online ? "online" : "offline"}
+                    </span>
+                `;
                 usersList.appendChild(li);
             });
         }

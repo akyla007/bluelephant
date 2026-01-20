@@ -22,7 +22,10 @@ class ConnectionManager:
     def get_user_names(self) -> List[str]:
         return list(self.active_connections.values())
 
-    async def broadcast_users(self) -> None:
-        payload = json.dumps({"type": "users", "items": self.get_user_names()})
+    def has_name_active(self, name: str) -> bool:
+        return any(active_name == name for active_name in self.active_connections.values())
+
+    async def broadcast_users(self, users: List[dict]) -> None:
+        payload = json.dumps({"type": "users", "items": users})
         for connection in list(self.active_connections.keys()):
             await connection.send_text(payload)
