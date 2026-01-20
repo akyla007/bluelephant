@@ -7,7 +7,7 @@ Descrição do desafio: ./info/desafio_tecnico_bluelephant.pdf
 Este projeto mostra, de forma direta, como criar um chat simples com **WebSockets**.
 Ele possui:
 - **Backend em Python (FastAPI)** para manter conexões ativas e fazer **broadcast** de mensagens.
-- **Frontend em HTML + JavaScript** para enviar e receber mensagens no navegador.
+- **Frontend em HTML + JavaScript** com **Bootstrap 5** para enviar e receber mensagens no navegador.
 
 Objetivo: demonstrar domínio do protocolo WebSocket e organização de código.
 
@@ -39,6 +39,7 @@ Servidor FastAPI
 - **uv** – Gerenciamento de dependências e execução
 - **Black** – Formatação automática de código
 - **HTML + JavaScript** – Cliente WebSocket simples
+- **Bootstrap 5** – Layout moderno via CDN
 
 ---
 
@@ -48,6 +49,8 @@ Servidor FastAPI
 bluelephant/
 ├── backend/
 │   ├── main.py
+│   ├── http_handlers.py
+│   ├── websocket_handlers.py
 │   └── connection_manager.py
 ├── frontend/
 │   └── index.html
@@ -104,7 +107,8 @@ Resposta esperada:
 
 1. Abra o arquivo frontend/index.html no navegador.
 2. Abra duas abas com esse mesmo arquivo.
-3. Envie mensagens em uma aba e veja o **broadcast** na outra.
+3. Informe um nome em cada aba.
+4. Envie mensagens em uma aba e veja o **broadcast** na outra.
 
 ### ✅ Teste via linha de comando (opcional)
 
@@ -131,6 +135,7 @@ Ao conectar, o cliente recebe um histórico das últimas 20 mensagens (configur�
 - **FastAPI** pela simplicidade, clareza e suporte nativo a WebSockets.
 - **ConnectionManager** para centralizar o controle das conexões ativas e facilitar manutenção.
 - **Broadcast** como abordagem mais simples e adequada ao escopo do desafio.
+- **Handlers dedicados** para rotas HTTP e WebSocket, mantendo o `main.py` apenas com wiring.
 - **uv** e **black** para ambiente moderno, reprodutível e código padronizado.
 - **sqlite**: Fácil de manusear.
 

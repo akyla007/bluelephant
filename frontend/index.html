@@ -34,14 +34,16 @@
 
 <body>
     <main class="container py-5">
-        <div class="row justify-content-center">
+        <div class="row g-4 justify-content-center">
             <div class="col-12 col-lg-8">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div>
                         <h1 class="h3 mb-1 fw-semibold">BlueElephant Chat</h1>
                         <p class="text-muted mb-0">Converse em tempo real via WebSocket</p>
                     </div>
-                    <span class="badge text-bg-primary">Online</span>
+                    <span class="badge text-bg-primary">
+                        Online: <span id="onlineCount">0</span>
+                    </span>
                 </div>
 
                 <div class="card shadow-sm chat-card">
@@ -57,19 +59,52 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col-12 col-lg-4">
+                <div class="card shadow-sm chat-card">
+                    <div class="card-body">
+                        <h2 class="h6 text-uppercase text-muted mb-3">Usuários online</h2>
+                        <ul id="usersList" class="list-unstyled d-grid gap-2 mb-0"></ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <script>
-        const socket = new WebSocket("ws://localhost:8000/ws");
+        let displayName = "";
+
+        while (!displayName) {
+            displayName = (prompt("Digite seu nome para entrar no chat:") || "").trim();
+        }
+
+        const socket = new WebSocket(
+            `ws://localhost:8000/ws?name=${encodeURIComponent(displayName)}`
+        );
 
         const messages = document.getElementById("messages");
         const input = document.getElementById("messageInput");
+        const usersList = document.getElementById("usersList");
+        const onlineCount = document.getElementById("onlineCount");
 
         socket.onmessage = function (event) {
+            const data = event.data;
+
+            if (data.startsWith("{")) {
+                try {
+                    const payload = JSON.parse(data);
+                    if (payload.type === "users" && Array.isArray(payload.items)) {
+                        renderUsers(payload.items);
+                        return;
+                    }
+                } catch {
+                    // fallback para mensagem comum
+                }
+            }
+
             const li = document.createElement("li");
             li.className = "px-3 py-2 rounded-3";
-            li.textContent = event.data;
+            li.textContent = data;
             messages.appendChild(li);
             messages.scrollTop = messages.scrollHeight;
         };
@@ -87,6 +122,18 @@
                 sendMessage();
             }
         });
+
+        function renderUsers(users) {
+            usersList.innerHTML = "";
+            onlineCount.textContent = users.length.toString();
+
+            users.forEach((id) => {
+                const li = document.createElement("li");
+                li.className = "px-3 py-2 rounded-3 bg-light border";
+                li.textContent = id;
+                usersList.appendChild(li);
+            });
+        }
     </script>
 </body>
 
