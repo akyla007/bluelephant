@@ -7,7 +7,7 @@ Descrição do desafio: ./info/desafio_tecnico_bluelephant.pdf
 Este projeto mostra, de forma direta, como criar um chat simples com **WebSockets**.
 Ele possui:
 - **Backend em Python (FastAPI)** para manter conexões ativas e fazer **broadcast** de mensagens.
-- **Frontend em HTML + JavaScript** com **Bootstrap 5** para enviar e receber mensagens no navegador.
+- **Frontend em HTML + JavaScript** com **Bootstrap 5** para enviar e receber mensagens e imagens no navegador.
 
 Objetivo: demonstrar domínio do protocolo WebSocket e organização de código.
 
@@ -85,6 +85,12 @@ uv sync
 uv run uvicorn backend.main:app --reload --reload-dir backend
 ```
 
+Ou, para formatar automaticamente com **Black** antes de iniciar:
+
+```bash
+uv run python -m backend.dev
+```
+
 Se tudo estiver ok, o servidor estará em http://localhost:8000.
 
 ---
@@ -108,7 +114,8 @@ Resposta esperada:
 1. Abra o arquivo frontend/index.html no navegador.
 2. Abra duas abas com esse mesmo arquivo.
 3. Informe um nome em cada aba.
-4. Envie mensagens em uma aba e veja o **broadcast** na outra.
+4. Envie mensagens ou imagens em uma aba e veja o **broadcast** na outra.
+5. Veja a lista de usuários online e offline no painel lateral.
 
 ### ✅ Teste via linha de comando (opcional)
 
@@ -122,7 +129,8 @@ Abra dois terminais e envie mensagens para validar o broadcast.
 ## 💾 Persistência (SQLite)
 
 As mensagens são armazenadas em SQLite no arquivo `messages.db`.
-- Tabela: `messages (id, client_id, content, created_at)`
+- Tabela: `messages (id, client_id, content, created_at, message_type)`
+- Tabela: `users (name, last_seen, is_online)`
 - A cada mensagem recebida via WebSocket:
   1. O servidor salva no banco
   2. Realiza broadcast para os clientes conectados
@@ -138,6 +146,9 @@ Ao conectar, o cliente recebe um histórico das últimas 20 mensagens (configur�
 - **Handlers dedicados** para rotas HTTP e WebSocket, mantendo o `main.py` apenas com wiring.
 - **uv** e **black** para ambiente moderno, reprodutível e código padronizado.
 - **sqlite**: Fácil de manusear.
+ - **Nomes de usuário** via query string no handshake do WebSocket.
+ - **Lista de usuários online/offline** persistida e sincronizada para todos os clientes.
+ - **Mensagens com tipo** (`text`, `image`, `system`) para suportar multimídia.
 
 ## 🚀 Possíveis Extensões
 
